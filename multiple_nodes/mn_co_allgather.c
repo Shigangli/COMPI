@@ -1,3 +1,7 @@
+ /*
+ * Author(s): Shigang Li <shigangli.cs@gmail.com>
+ */
+
 #include <mpi.h>
 #include <stdio.h>
 #include <stdlib.h>

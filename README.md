@@ -14,7 +14,8 @@ The work of COMPI is pulished in TPDS'18 and PPoPP'17. See the [paper](https://s
   volume={29},
   number={3},
   pages={542-555},
-  doi={10.1109/TPDS.2017.2768413}}
+  doi={10.1109/TPDS.2017.2768413}
+}
 ```
 
 ```bibtex

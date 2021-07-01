@@ -82,81 +82,81 @@ int CO_Allgather(void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recv
 
 int main (int argc, char **argv)
 {
-	uint64_t datasize[SIZES] = {1, 1, 1, 1, 1, 1, 2, 4, 8, 16, 32, 64, 128, 
+    uint64_t datasize[SIZES] = {1, 1, 1, 1, 1, 1, 2, 4, 8, 16, 32, 64, 128, 
                            256, 512,1024,2048,4096,8192,16384,32768,65536};
 
-	uint64_t DATASIZE;
-	int id, nprocs;
-	double begin, elapse, felapse;
-	MPI_Init(&argc,&argv);	
-	MPI_Comm_rank(MPI_COMM_WORLD,&id);	
-	MPI_Comm_size(MPI_COMM_WORLD,&nprocs);
-	MPI_Comm node_comm;
-	MPI_Comm net_comm;
-	int node_rank;
-	int node_size;
-	int net_rank;
-	int net_size;
+    uint64_t DATASIZE;
+    int id, nprocs;
+    double begin, elapse, felapse;
+    MPI_Init(&argc,&argv);
+    MPI_Comm_rank(MPI_COMM_WORLD,&id);
+    MPI_Comm_size(MPI_COMM_WORLD,&nprocs);
+    MPI_Comm node_comm;
+    MPI_Comm net_comm;
+    int node_rank;
+    int node_size;
+    int net_rank;
+    int net_size;
 
-	char proc_name[MPI_MAX_PROCESSOR_NAME];
-	int proc_name_len;
-	MPI_Get_processor_name(proc_name, &proc_name_len);
-	int color = 0;
-  char* s;
-	for(s = proc_name; *s != '\0'; s++) {
-		color = *s + 31 * color;
-	}
-	color &= 0x7FFFFFFF;
-	MPI_Comm_split(MPI_COMM_WORLD, color, id, &node_comm);
-	MPI_Comm_rank(node_comm, &node_rank);
-	MPI_Comm_size(node_comm, &node_size);
+    char proc_name[MPI_MAX_PROCESSOR_NAME];
+    int proc_name_len;
+    MPI_Get_processor_name(proc_name, &proc_name_len);
+    int color = 0;
+    char* s;
+    for(s = proc_name; *s != '\0'; s++) {
+        color = *s + 31 * color;
+    }
+    
+    color &= 0x7FFFFFFF;
+    MPI_Comm_split(MPI_COMM_WORLD, color, id, &node_comm);
+    MPI_Comm_rank(node_comm, &node_rank);
+    MPI_Comm_size(node_comm, &node_size);
 
-	MPI_Comm_split(MPI_COMM_WORLD, node_rank, id, &net_comm);
+    MPI_Comm_split(MPI_COMM_WORLD, node_rank, id, &net_comm);
 
-	MPI_Comm_rank(net_comm, &net_rank);
-	MPI_Comm_size(net_comm, &net_size);
+    MPI_Comm_rank(net_comm, &net_rank);
+    MPI_Comm_size(net_comm, &net_size);
 
-	unsigned char *x, *y;
-	int i,j,k;
-	for(j=0; j<SIZES; j++) {
+    unsigned char *x, *y;
+    int i,j,k;
+    for(j=0; j<SIZES; j++) {
+        MPI_Barrier(MPI_COMM_WORLD);
+        DATASIZE = datasize[j];
+        x=(unsigned char *)malloc(sizeof(unsigned char)*DATASIZE);
+        y=(unsigned char *)malloc(sizeof(unsigned char)*DATASIZE*net_size);
 
-		  MPI_Barrier(MPI_COMM_WORLD);
-		  DATASIZE = datasize[j];
-		  x=(unsigned char *)malloc(sizeof(unsigned char)*DATASIZE);
-		  y=(unsigned char *)malloc(sizeof(unsigned char)*DATASIZE*net_size);
+        for(i=0; i<DATASIZE; i++) {
+            x[i] = id;
+        }
 
-		  for(i=0; i<DATASIZE; i++) {
-		    	x[i] = id;
-		  }
+        for(i=0; i<DATASIZE*net_size; i++) {
+            y[i] = 0;
+        }
 
-		  for(i=0; i<DATASIZE*net_size; i++) {
-		    	y[i] = 0;
-		  }
+        MPI_Barrier(MPI_COMM_WORLD);
+        elapse = 0;
+        if(net_size > 1 && node_rank==0) {
+           //warmup
+          CO_Allgather(x, DATASIZE, MPI_UNSIGNED_CHAR, y, DATASIZE, MPI_UNSIGNED_LONG_LONG, net_comm);
+          CO_Allgather(x, DATASIZE, MPI_UNSIGNED_CHAR, y, DATASIZE, MPI_UNSIGNED_LONG_LONG, net_comm);
 
-		  MPI_Barrier(MPI_COMM_WORLD);
-		  elapse = 0;
-		  if(net_size > 1 && node_rank==0) {
-        //warmup
-			  CO_Allgather(x, DATASIZE, MPI_UNSIGNED_CHAR, y, DATASIZE, MPI_UNSIGNED_LONG_LONG, net_comm);
-			  CO_Allgather(x, DATASIZE, MPI_UNSIGNED_CHAR, y, DATASIZE, MPI_UNSIGNED_LONG_LONG, net_comm);
+          begin = MPI_Wtime();
+          for(i=0; i<ITER; i++) {
+              CO_Allgather(x, DATASIZE, MPI_UNSIGNED_CHAR, y, DATASIZE, MPI_UNSIGNED_LONG_LONG, net_comm);
+          }
 
-			  begin = MPI_Wtime();
-			  for(i=0; i<ITER; i++) {
-				    CO_Allgather(x, DATASIZE, MPI_UNSIGNED_CHAR, y, DATASIZE, MPI_UNSIGNED_LONG_LONG, net_comm);
-			  }
-
-			  elapse = MPI_Wtime() - begin;
-			  MPI_Reduce(&elapse, &felapse, 1, MPI_DOUBLE, MPI_SUM, 0, net_comm);
+          elapse = MPI_Wtime() - begin;
+          MPI_Reduce(&elapse, &felapse, 1, MPI_DOUBLE, MPI_SUM, 0, net_comm);
                         
-			  if(net_rank==0)
-				  printf("Allgather, Datasize= %d, Process = %d, Total time = %f s\n", DATASIZE, id, felapse/ITER/net_size);
-	    }
+          if(net_rank==0)
+            printf("Allgather, Datasize= %d, Process = %d, Total time = %f s\n", DATASIZE, id, felapse/ITER/net_size);
+        }
 
-		  MPI_Barrier(MPI_COMM_WORLD);
-		  free(x);
-		  free(y);
-	}
+        MPI_Barrier(MPI_COMM_WORLD);
+        free(x);
+        free(y);
+    }
 
-	MPI_Finalize();
-	return 0;
+    MPI_Finalize();
+    return 0;
 }

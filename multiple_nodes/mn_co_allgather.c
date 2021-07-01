@@ -136,7 +136,7 @@ int main (int argc, char **argv)
         MPI_Barrier(MPI_COMM_WORLD);
         elapse = 0;
         if(net_size > 1 && node_rank==0) {
-           //warmup
+          //warmup
           CO_Allgather(x, DATASIZE, MPI_UNSIGNED_CHAR, y, DATASIZE, MPI_UNSIGNED_LONG_LONG, net_comm);
           CO_Allgather(x, DATASIZE, MPI_UNSIGNED_CHAR, y, DATASIZE, MPI_UNSIGNED_LONG_LONG, net_comm);
 

@@ -15,7 +15,7 @@
 #define ITER 128
 #define SIZES 20
 
-int CO_Alltoall(void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm) {
+int MN_CO_Alltoall(void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm) {
 
   int32_t send_size;
   int id, nprocs;
@@ -151,12 +151,12 @@ int main (int argc, char **argv)
         //net_size is a power-of-four
         if(net_size > 1 && node_rank==0) {
           //warmup
-          CO_Alltoall(x, DATASIZE/net_size, MPI_UNSIGNED_LONG_LONG, y, DATASIZE/net_size, MPI_UNSIGNED_LONG_LONG, net_comm);
-          CO_Alltoall(x, DATASIZE/net_size, MPI_UNSIGNED_LONG_LONG, y, DATASIZE/net_size, MPI_UNSIGNED_LONG_LONG, net_comm);
+          MN_CO_Alltoall(x, DATASIZE/net_size, MPI_UNSIGNED_LONG_LONG, y, DATASIZE/net_size, MPI_UNSIGNED_LONG_LONG, net_comm);
+          MN_CO_Alltoall(x, DATASIZE/net_size, MPI_UNSIGNED_LONG_LONG, y, DATASIZE/net_size, MPI_UNSIGNED_LONG_LONG, net_comm);
           begin = MPI_Wtime();
 
           for(i=0; i<ITER; i++) {
-              CO_Alltoall(x, DATASIZE/net_size, MPI_UNSIGNED_LONG_LONG, y, DATASIZE/net_size, MPI_UNSIGNED_LONG_LONG, net_comm);
+              MN_CO_Alltoall(x, DATASIZE/net_size, MPI_UNSIGNED_LONG_LONG, y, DATASIZE/net_size, MPI_UNSIGNED_LONG_LONG, net_comm);
           }
           elapse = MPI_Wtime() - begin;   
 

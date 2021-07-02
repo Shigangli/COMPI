@@ -15,7 +15,7 @@
 #define ITER 128
 #define SIZES 22
 
-int CO_Allgather(void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm)
+int MN_CO_Allgather(void* sendbuf, int sendcount, MPI_Datatype sendtype, void* recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm)
 {
   int32_t send_size;
   int id, nprocs;
@@ -137,12 +137,12 @@ int main (int argc, char **argv)
         elapse = 0;
         if(net_size > 1 && node_rank==0) {
           //warmup
-          CO_Allgather(x, DATASIZE, MPI_UNSIGNED_CHAR, y, DATASIZE, MPI_UNSIGNED_LONG_LONG, net_comm);
-          CO_Allgather(x, DATASIZE, MPI_UNSIGNED_CHAR, y, DATASIZE, MPI_UNSIGNED_LONG_LONG, net_comm);
+          MN_CO_Allgather(x, DATASIZE, MPI_UNSIGNED_CHAR, y, DATASIZE, MPI_UNSIGNED_LONG_LONG, net_comm);
+          MN_CO_Allgather(x, DATASIZE, MPI_UNSIGNED_CHAR, y, DATASIZE, MPI_UNSIGNED_LONG_LONG, net_comm);
 
           begin = MPI_Wtime();
           for(i=0; i<ITER; i++) {
-              CO_Allgather(x, DATASIZE, MPI_UNSIGNED_CHAR, y, DATASIZE, MPI_UNSIGNED_LONG_LONG, net_comm);
+              MN_CO_Allgather(x, DATASIZE, MPI_UNSIGNED_CHAR, y, DATASIZE, MPI_UNSIGNED_LONG_LONG, net_comm);
           }
 
           elapse = MPI_Wtime() - begin;
